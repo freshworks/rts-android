@@ -1,0 +1,44 @@
+apply plugin: 'com.android.library'
+apply plugin: 'maven-publish'
+
+// Default version. Override while executing gradle publish
+def artifactVersion = "0.0.1"
+if (project.hasProperty("mvnVersion")) {
+    artifactVersion = mvnVersion
+}
+
+afterEvaluate {
+
+    task androidSourcesJar(type: Jar) {
+        archiveClassifier.set('sources')
+        from android.sourceSets.main.java.srcDirs
+        from android.sourceSets.main.kotlin.srcDirs
+    }
+
+    task androidLibsJar(type: Jar) {
+        archiveClassifier.set('libs')
+        from fileTree(dir: 'lib', include: '**/*.jar')
+    }
+
+    artifacts {
+        archives androidSourcesJar
+        archives androidLibsJar
+    }
+
+    def moduleName = name
+    publishing {
+        publications {
+            release(MavenPublication) {
+                from components.release
+                artifact androidSourcesJar
+
+                groupId = "com.freshworks.rts"
+                artifactId = moduleName
+                version = artifactVersion
+            }
+        }
+        repositories {
+            maven { url "https://jitpack.io" }
+        }
+    }
+}
